@@ -1,0 +1,20 @@
+# -cp src
+# -D analyzer-optimize
+# -main Main
+# --interp
+
+
+
+-cp src
+-main Tone2HX
+-neko bin/tone2hx.n
+-cmd cd bin/
+# -cmd if exist out rd /q /s out
+# Don't need to do this every time, so for now commented
+# -cmd npm install -g jsdoc
+# -cmd npm install -g jsdoc-json
+# -cmd npm link jsdoc-json
+# -cmd git clone --progress https://github.com/Tonejs/Tone.js.git -- tonejs
+# -cmd jsdoc --template ./node_modules/jsdoc-json --destination doc.json --recurse tonejs/Tone
+# Start with Neko
+-cmd neko tone2hx.n doc.json
