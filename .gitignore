@@ -1,1 +1,5 @@
 bin/tone
+bin/tone2hx.js
+bin/tone2hx.js.map
+bin/tone2hx.n
+bin/node_modules/*
