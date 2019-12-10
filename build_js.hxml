@@ -1,0 +1,7 @@
+-cp test
+-cp bin
+-main Main
+-js docs/tone2hx.js
+-debug
+# -dce full
+

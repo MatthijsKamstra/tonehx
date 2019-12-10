@@ -1,5 +1,7 @@
 package data;
 
+import js.Lib;
+import js.lib.Object;
 import AST.JSDocKind;
 import haxe.display.JsonModuleTypes.JsonTypeKind;
 import haxe.ds.StringMap;
@@ -18,10 +20,14 @@ class BaseObj {
 	public var path:String; // path to export folder and "package"  @example: `tone/component`
 	public var pathArray:Array<String>; // path to export folder and "package"  @example: `tone.component`
 
+	// types
+	public var typeArray:Array<String>;
+	public var typeString:String; // simple version of types
+
 	/**
 	 * dot-path for import (without `import`)
 	 *
-	 * @example : `tone.component.AmplitudeEnvelope`
+	 * @example : `tone.component`
 	 */
 	public var pathImport:String;
 
@@ -34,22 +40,26 @@ class BaseObj {
 
 	public function new(doc:JsdocObject) {
 		// only one that will not work with Base.
-
 		if (doc.kind == JSDocKind.Package)
 			return;
 
 		this.jsdoc = doc;
 
 		this.name = doc.name; //     "name": "AmplitudeEnvelope",
-		this.classdesc = convertDoc(doc.classdesc); // only with class
+		this.classdesc = convertClassdesc(doc.classdesc); // only with class
 		// this.className = (doc.meta != null) ? doc.meta.filename.replace(".js", "") : doc.name; // "filename":"AmplitudeEnvelope.js",
 		this.className = doc.meta.filename.replace(".js", ""); // "filename":"AmplitudeEnvelope.js",
 		// `tonejs` is the folder with spit the files into HARDCODED
 		var _path = doc.meta.path.split("tonejs/")[1].toLowerCase(); // "path": "/Users/matthijs/Documents/GIT/tonehx/bin/tonejs/Tone/component",
 		pathArray = _path.split('/'); // [tone,component]
 		this.path = pathArray.join('/');
-		this.pathImport = '${pathArray.join('.')}.${this.className}'; // tone.component.AmplitudeEnvelope (without import)
+		this.pathImport = '${pathArray.join('.')}'; // tone.component (without import)
+		// this.pathImport = '${pathArray.join('.')}.${this.className}'; // tone.component.AmplitudeEnvelope (without import)
 		this.pathExport = '${pathArray.join('/')}/${this.className}.hx'; // path for export @example : `tone/component/AmplitudeEnvelope.hx`
+		// type
+
+		typeArray = (doc.type != null) ? convertType2Array(doc.type.names) : [];
+		typeString = convertType2String(typeArray);
 	}
 
 	public function convertReturn(returns:Array<AST.Returns>):String {
@@ -97,8 +107,8 @@ class BaseObj {
 	 * @param names
 	 * @return String
 	 */
-	public function convertTypeTwo(names:Array<String>):String {
-		var p = "##";
+	public function convertType2String(names:Array<String>):String {
+		var p = "Any";
 		var arr = convertType2Array(names);
 
 		if (names.length == 1) {
@@ -118,10 +128,10 @@ class BaseObj {
 	}
 
 	// make this doc better?
-	public function convertDoc(doc:String):String {
+	public function convertClassdesc(doc:String):String {
 		if (doc == "" || doc == null)
 			return '';
-		return doc.replace("\t", "").replace("***", "").replace("  ", "").replace("\n", "\n * ");
+		return '/**\n * ' + doc.replace("\t", "").replace("***", "").replace("  ", "").replace("\n ", "\n").replace("\n", "\n * ") + '\n */\n';
 	}
 
 	/**
@@ -131,6 +141,37 @@ class BaseObj {
 	 */
 	public function convertType(type:String):String {
 		var _type = type.replace("Tone.", "");
+		var hxtype = '';
+		// if (_type.indexOf("Array.") != -1) {
+		// 	_type = _type.replace("Array.", "Array");
+		// }
+		// switch (_type) {
+		// 	case "number", "Number":
+		// 		hxtype = "Float";
+		// 	case "function", "Function":
+		// 		hxtype = "haxe.Constraints.Function"; // hxtype = "js.Lib.Function";
+		// 	case 'string', "String":
+		// 		hxtype = "String";
+		// 	case "boolean", "Boolean":
+		// 		hxtype = "Bool";
+		// 	case "", "*":
+		// 		hxtype = "Any";
+		// 	case "Array.<Number>":
+		// 		hxtype = "Array<Float>";
+		// 	case "Array":
+		// 		hxtype = "Array<Any>";
+		// 	case "Object", "object":
+		// 		hxtype = "Any";
+		// 	case "undefined", null:
+		// 		hxtype = "Any";
+		// 	case "Promise":
+		// 		hxtype = "Promise<Any>";
+		// 	default:
+		// 		// trace("case '" + _type + "': trace ('" + _type + "');");
+		// }
+
+		// trace(this.name, _type);
+
 		if (_type == "number" || _type == "Number") {
 			_type = "Float";
 		}
@@ -159,12 +200,13 @@ class BaseObj {
 		if (_type == "Object" || _type == "object") {
 			_type = "Dynamic";
 		}
-		if (_type == "undefined") {
+		if (_type == "undefined" || _type == null || _type == Lib.undefined) {
 			_type = "Dynamic";
 		}
 		if (_type == "Promise") {
 			_type = "Promise<Dynamic>";
 		}
 		return _type;
+		// return hxtype;
 	}
 }

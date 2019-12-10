@@ -5,6 +5,32 @@ import AST.JsdocObject;
 
 using StringTools;
 
+/**
+	{
+	comment: '',
+	meta: {
+	  range: [Array],
+	  filename: 'Synth.js',
+	  lineno: 99,
+	  columnno: 0,
+	  path: '/Users/matthijs/Documents/GIT/tonehx/bin/tonejs/Tone/instrument',
+	  code: [Object],
+	  vars: [Object]
+	},
+	description: 'start the release portion of the envelope',
+	params: [ [Object] ],
+	returns: [ [Object] ],
+	access: 'private',
+	name: '_triggerEnvelopeRelease',
+	longname: 'Tone.Synth#_triggerEnvelopeRelease',
+	kind: 'function',
+	memberof: 'Tone.Synth',
+	scope: 'instance',
+	overrides: 'Tone.Monophonic#_triggerEnvelopeRelease',
+	___id: 'T000002R003810',
+	___s: true
+	}
+ */
 class FunctionObj extends BaseObj {
 	public var description:String;
 	public var params:Array<AST.Params>;
@@ -17,16 +43,15 @@ class FunctionObj extends BaseObj {
 
 	// public var type:String;
 
-	public function new(obj:JsdocObject) {
-		super(jsdoc);
+	public function new(doc:JsdocObject) {
+		super(doc);
 		// this.type = this.className;
-		this.description = (obj.description != null) ? obj.description.replace("\n", "\n\t * ") : "";
-		this.params = (obj.params != null) ? obj.params : [];
-		this.returns = (obj.returns != null) ? obj.returns : [];
+		this.description = (doc.description != null) ? doc.description.replace("\n", "\n\t * ") : "";
+		this.params = (doc.params != null) ? doc.params : [];
+		this.returns = (doc.returns != null) ? doc.returns : [];
 
-		this.typesArray = convertParams2Array(obj.params); // //
-
-		this.functionReturn = convertReturn(obj.returns);
+		this.typesArray = convertParams2Array(doc.params);
+		this.functionReturn = convertReturn(doc.returns);
 
 		this.functionParams = '';
 
@@ -34,18 +59,21 @@ class FunctionObj extends BaseObj {
 		this.functionComment += '\n\t * ${this.description}';
 		this.functionComment += '\n\t *';
 		// check if there are params for this function
-		if (obj.params != null) {
+		if (doc.params != null) {
 			// get all params for this function
-			for (i in 0...obj.params.length) {
-				var _params:AST.Params = obj.params[i];
-				var _description = (_params.description != null) ? _params.description.replace("\n", " ").replace("/t", " ").replace("  ", "") : "";
+			for (i in 0...doc.params.length) {
+				var _params:AST.Params = doc.params[i];
+				var _description = (_params.description != null) ? _params.description.replace("\n ", " ")
+					.replace("\n", " ")
+					.replace("\t", " ")
+					.replace("  ", "") : "";
 				this.functionComment += '\n\t * @param ${_params.name}\t${_description}';
 
-				var __type = convertTypeTwo(_params.type.names);
+				var __type = convertType2String(_params.type.names);
 				functionParams += (_params.optional == true) ? "?" : "";
 				functionParams += '${_params.name}:';
 				functionParams += '${__type}';
-				if (i < obj.params.length - 1)
+				if (i < doc.params.length - 1)
 					functionParams += ', ';
 			}
 		}
@@ -59,5 +87,26 @@ class FunctionObj extends BaseObj {
 		 * @param velocity	The velocity to play the sample back.
 		 * @return	Sampler
 		 */
+	}
+
+	public function toString():String {
+		var str = '';
+		var _access = 'public';
+		if (this.jsdoc.access == 'private') {
+			_access = 'private';
+		} else {
+			if (this.jsdoc.access == null) {} else {
+				trace('not sure what to do with this: ${this.jsdoc.access}');
+			}
+		}
+
+		if (_access == 'private' || this.jsdoc.inherited == true) {
+			str += '\n\t// ${_access} function ${this.name} (${this.functionParams}):${this.functionReturn};';
+		} else {
+			str += '${this.functionComment}';
+			str += '\n\t${_access} function ${this.name} (${this.functionParams}):${this.functionReturn};';
+		}
+
+		return str;
 	}
 }
